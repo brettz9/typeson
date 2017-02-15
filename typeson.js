@@ -24,7 +24,7 @@ function hasConstructorOf (a, b) {
     return typeof Ctor === 'function' && b !== null && fnToString.call(Ctor) === fnToString.call(b);
 }
 
-function isPlainObject (val) { // Mirrors jQuery's
+function isPlainObject (val, strict) { // Mirrors jQuery's but adds non-strict mode
     if (!val || toStringTag(val) !== 'Object') {
         return false;
     }
@@ -34,7 +34,10 @@ function isPlainObject (val) { // Mirrors jQuery's
         return true;
     }
 
-    return hasConstructorOf(val, Object);
+    if (strict) {
+        return hasConstructorOf(val, Object);
+    }
+    return !isArray(val); // Todo: We could recursively check to see if the prototypes are all loosely plain
 }
 
 /* Typeson - JSON with types
@@ -54,6 +57,9 @@ function Typeson (options) {
     var replacers = [];
     // Revivers: map {type => reviver}. Sample: {"Date": value => new Date(value)}
     var revivers = {};
+    options = options || {};
+    var cyclic = ('cyclic' in options) ? options.cyclic : true;
+    var strictObjects = ('strictObjects' in options) ? options.strictObjects : true;
 
     /** Types registered via register() */
     var regTypes = this.types = {};
@@ -85,12 +91,11 @@ function Typeson (options) {
             refObjs=[], // For checking cyclic references
             refKeys=[]; // For checking cyclic references
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-        var cyclic = options && ('cyclic' in options) ? options.cyclic : true;
         var ret = _encapsulate ('', obj, cyclic, stateObj || {});
         // Add $types to result only if we ever bumped into a special type
         if (keys(types).length) {
             // Special if array (or primitive) was serialized because JSON would ignore custom $types prop on it.
-            if (!ret || !isPlainObject(ret) || ret.$types) return {$:ret, $types: {$: types}};
+            if (!ret || !isPlainObject(ret, false) || ret.$types) return {$:ret, $types: {$: types}};
             ret.$types = types;
         }
         return ret;
@@ -116,7 +121,7 @@ function Typeson (options) {
                     return '#'+refKeys[refIndex];
                 }
             }
-            var isPlainObj = isPlainObject(value);
+            var isPlainObj = isPlainObject(value, strictObjects);
             var replaced = isPlainObj ?
                 value : // Optimization: if plain object, don't try finding a replacer
                 replace(keypath, value, stateObj);
@@ -177,7 +182,7 @@ function Typeson (options) {
         var types = obj && obj.$types,
             ignore$Types = true;
         if (!types) return obj; // No type info added. Revival not needed.
-        if (types.$ && isPlainObject(types.$)) {
+        if (types.$ && isPlainObject(types.$, false)) {
             // Special when root object is not a trivial Object, it will be encapsulated in $.
             obj = obj.$;
             types = types.$;
@@ -189,7 +194,7 @@ function Typeson (options) {
         function _revive (keypath, value, target) {
             if (ignore$Types && keypath === '$types') return;
             var type = types[keypath];
-            if (value && (isPlainObject(value) || isArray(value))) {
+            if (value && (isPlainObject(value, strictObjects) || isArray(value))) {
                 var clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach(function (key) {
