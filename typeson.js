@@ -1,9 +1,15 @@
+var JSON = require('../../test/json2-module');
+
 var keys = Object.keys,
     isArray = Array.isArray,
     toString = ({}.toString),
     getProto = Object.getPrototypeOf,
     hasOwn = ({}.hasOwnProperty),
     fnToString = hasOwn.toString;
+
+function _pushArr (arr, arr2) { // We avoid checking the prototype as occurs with Array push since the structured cloning algorithm does not check (and W3C tests check for this)
+    arr[arr.length] = arr2;
+}
 
 function isThenable (v, catchCheck) {
     return Typeson.isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v.catch === 'function');
@@ -87,7 +93,8 @@ function Typeson (options) {
         opts = Object.assign({}, options, opts, {stringification: true});
         var encapsulated = encapsulate(obj, null, opts);
         if (isArray(encapsulated)) {
-            return JSON.stringify(encapsulated[0], replacer, space);
+            var ret = JSON.stringify(encapsulated[0], replacer, space);
+            return ret;
         }
         return encapsulated.then(function (res) {
             return JSON.stringify(res, replacer, space);
@@ -206,8 +213,8 @@ function Typeson (options) {
                 var refIndex = refObjs.indexOf(value);
                 if (refIndex < 0) {
                     if (cyclic === true) {
-                        refObjs.push(value);
-                        refKeys.push(keypath);
+                        refObjs[refObjs.length] = value;
+                        refKeys[refKeys.length] = keypath;
                     }
                 } else {
                     types[keypath] = '#';
@@ -230,7 +237,7 @@ function Typeson (options) {
             else if (isPlainObj || stateObj.iterateIn === 'object')
                 clone = {};
             else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
-                promisesData.push([keypath, value, cyclic, stateObj]);
+                _pushArr(promisesData, [keypath, value, cyclic, stateObj]);
                 return value;
             }
             else return value; // Only clone vanilla objects and arrays
@@ -242,7 +249,7 @@ function Typeson (options) {
                     var kp = keypath + (keypath ? '.' : '') + key;
                     var val = _encapsulate(kp, value[key], cyclic, ownKeysObj, promisesData);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, cyclic, ownKeysObj, clone, key]);
+                        _pushArr(promisesData, [kp, val, cyclic, ownKeysObj, clone, key]);
                     } else if (val !== undefined) clone[key] = val;
                 }
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
@@ -250,7 +257,7 @@ function Typeson (options) {
                     var kp = keypath + (keypath ? '.' : '') + key;
                     var val = _encapsulate(kp, value[key], cyclic, {ownKeys: true}, promisesData);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, cyclic, {ownKeys: true}, clone, key]);
+                        _pushArr(promisesData, [kp, val, cyclic, {ownKeys: true}, clone, key]);
                     } else if (val !== undefined) clone[key] = val;
                 });
             }
@@ -261,7 +268,7 @@ function Typeson (options) {
                         var kp = keypath + (keypath ? '.' : '') + i;
                         var val = _encapsulate(kp, undefined, cyclic, {ownKeys: false}, promisesData);
                         if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([kp, val, cyclic, {ownKeys: false}, clone, i]);
+                            _pushArr(promisesData, [kp, val, cyclic, {ownKeys: false}, clone, i]);
                         } else if (val !== undefined) clone[i] = val;
                     }
                 }
