@@ -132,15 +132,29 @@ function Typeson (options) {
             refObjs = [], // For checking cyclic references
             refKeys = [], // For checking cyclic references
             promisesDataRoot = [];
-        // Clone the object deeply while at the same time replacing any special types or cyclic reference:
+        // Clone the object deeply while at the same time replacing any
+        //    special types or cyclic reference:
         var cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
         var encapsulateObserver = opts.encapsulateObserver;
         var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
         function finish (ret) {
-            // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
+            // User is supplying own types
+            if (opts.typesOnly) {
+                return types;
+            }
+            if (opts.$types) {
+                return ret;
+            }
+            // Add $types to result only if we ever bumped into a special
+            //    type (or special case where object has own `$types`)
             if (keys(types).length) {
-                if (!ret || !isPlainObject(ret) || // Special if array (or a primitive) was serialized because JSON would ignore custom `$types` prop on it
-                    ret.hasOwnProperty('$types') // Also need to handle if this is an object with its own `$types` property (to avoid ambiguity)
+                if (
+                    // Special if array (or a primitive) was serialized because
+                    // JSON would ignore custom `$types` prop on it
+                    !ret || !isPlainObject(ret) ||
+                    // Also need to handle if this is an object with its own
+                    //    `$types` property (to avoid ambiguity)
+                    ret.hasOwnProperty('$types')
                 ) ret = {$: ret, $types: {$: types}};
                 else ret.$types = types;
             } else if (isObject(ret) && ret.hasOwnProperty('$types')) {
@@ -368,16 +382,28 @@ function Typeson (options) {
     var revive = this.revive = function (obj, opts) {
         opts = Object.assign({sync: true}, options, opts);
         var sync = opts.sync;
+        if (opts.$types) {
+            obj = {$: obj, $types: {$: opts.$types}};
+        }
         var types = obj && obj.$types,
             ignore$Types = true;
-        if (!types) return obj; // No type info added. Revival not needed.
-        if (types === true) return obj.$; // Object happened to have own `$types` property but with no actual types, so we unescape and return that object
+
+        // No type info added. Revival not needed.
+        if (!types) return obj;
+
+        // Object happened to have own `$types` property but with no actual
+        //   types, so we unescape and return that object
+        if (types === true) return obj.$;
+
+        // Special when root object is not a trivial Object, it will be
+        //   encapzsulated in $. It will also be encapsulated in $ if it has
+        //   its own `$` property to avoid ambiguity
         if (types.$ && isPlainObject(types.$)) {
-            // Special when root object is not a trivial Object, it will be encapsulated in $. It will also be encapsulated in $ if it has its own `$` property to avoid ambiguity
             obj = obj.$;
             types = types.$;
             ignore$Types = false;
         }
+
         var keyPathResolutions = [];
         var ret = _revive('', obj, null, opts);
         ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
