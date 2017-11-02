@@ -182,9 +182,9 @@ function Typeson (options) {
                     promResults.map(function (promResult) {
                         const newPromisesData = [];
                         const prData = promisesData.splice(0, 1)[0];
-                        const [keyPath, , cyclic, stateObj, parentObj, key, detectedType] = prData;
+                        const [keyPath, , cyclic, stateObj, parentObj, key, detectedType, parent, parentKey] = prData;
 
-                        const encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true, detectedType);
+                        const encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true, detectedType, parent, parentKey);
                         const isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
                         if (keyPath && isTypesonPromise) { // Handle case where an embedded custom type itself returns a `Typeson.Promise`
                             return encaps.p.then(function (encaps2) {
@@ -218,7 +218,11 @@ function Typeson (options) {
                         : Promise.resolve(finish(ret))
                     ));
 
-        function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
+        function _encapsulate (
+            keypath, value, cyclic,
+            stateObj, promisesData, resolvingTypesonPromise,
+            detectedType, parent, parentKey
+        ) {
             let ret;
             let observerData = {};
             const $typeof = typeof value;
@@ -236,13 +240,15 @@ function Typeson (options) {
                     stateObj,
                     promisesData,
                     resolvingTypesonPromise,
-                    awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
+                    awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise),
+                    parent,
+                    parentKey
                 }, type !== undefined ? {type} : {}));
             } : null;
             if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1}) {
                 if (value === undefined || ($typeof === 'number' &&
                     (isNaN(value) || value === -Infinity || value === Infinity))) {
-                    ret = replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise);
+                    ret = replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise, parent, parentKey);
                     if (ret !== value) {
                         observerData = {replaced: ret};
                     }
@@ -282,7 +288,7 @@ function Typeson (options) {
             )
                 // Optimization: if plain object and no plain-object replacers, don't try finding a replacer
                 ? value
-                : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr);
+                : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr, undefined, parent, parentKey);
             let clone;
             if (replaced !== value) {
                 ret = replaced;
@@ -295,7 +301,7 @@ function Typeson (options) {
                     clone = {};
                     observerData = {clone: clone};
                 } else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
-                    promisesData.push([keypath, value, cyclic, stateObj, undefined, undefined, stateObj.type]);
+                    promisesData.push([keypath, value, cyclic, stateObj, undefined, undefined, stateObj.type, parent, parentKey]);
                     ret = value;
                 } else {
                     ret = value; // Only clone vanilla objects and arrays
@@ -316,9 +322,9 @@ function Typeson (options) {
                 for (const key in value) {
                     const ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
                     const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-                    const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
+                    const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise, null, value, key);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
+                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type, parent, parentKey]);
                     } else if (val !== undefined) clone[key] = val;
                 }
                 if (runObserver) runObserver({endIterateIn: true, end: true});
@@ -326,9 +332,9 @@ function Typeson (options) {
                 keys(value).forEach(function (key) {
                     const kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
                     const ownKeysObj = {ownKeys: true};
-                    const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
+                    const val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise, null, value, key);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
+                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type, parent, parentKey]);
                     } else if (val !== undefined) clone[key] = val;
                 });
                 if (runObserver) runObserver({endIterateOwn: true, end: true});
@@ -340,9 +346,9 @@ function Typeson (options) {
                     if (!(i in value)) {
                         const kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
                         const ownKeysObj = {ownKeys: false};
-                        const val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
+                        const val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise, null, value, i);
                         if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, i, ownKeysObj.type]);
+                            promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, i, ownKeysObj.type, parent, parentKey]);
                         } else if (val !== undefined) clone[i] = val;
                     }
                 }
@@ -351,7 +357,7 @@ function Typeson (options) {
             return clone;
         }
 
-        function replace (keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise) {
+        function replace (keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise, parent, parentKey) {
             // Encapsulate registered types
             const replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
             let i = replacers.length;
@@ -371,11 +377,11 @@ function Typeson (options) {
                     // Now, also traverse the result in case it contains its own types to replace
                     stateObj = Object.assign(stateObj, {type, replaced: true});
                     if ((sync || !replacer.replaceAsync) && !replacer.replace) {
-                        return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
+                        return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type, parent, parentKey);
                     }
 
                     const replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
-                    return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
+                    return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type, parent, parentKey);
                 }
             }
             return value;
