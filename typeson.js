@@ -994,13 +994,16 @@ class Typeson {
             if (ignore$Types && keypath === '$types') {
                 return undefined;
             }
+            console.log('000', value, JSON.stringify(keypath));
             const type = types[keypath];
             const isArr = isArray(value);
             if (isArr || isPlainObject(value)) {
+                console.log('rrr', value);
                 // eslint-disable-next-line unicorn/no-new-array -- Sparse
                 const clone = isArr ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach((k) => {
+                    console.log('0000', JSON.stringify(k));
                     const val = _revive(
                         keypath + (keypath ? '.' : '') +
                             escapeKeyPathComponent(k),
@@ -1009,12 +1012,14 @@ class Typeson {
                         clone,
                         k
                     );
+                    console.log('1111', val);
                     const set = (v) => {
                         if (hasConstructorOf(v, Undefined)) {
                             clone[k] = undefined;
                         } else if (v !== undefined) {
                             clone[k] = v;
                         }
+                        console.log('2222', v);
                         return v;
                     };
                     if (hasConstructorOf(val, TypesonPromise)) {
@@ -1041,6 +1046,7 @@ class Typeson {
                     }
                     keyPathResolutions.splice(0, 1);
                 }
+                console.log('rrrend');
             }
             if (!type) {
                 return value;
@@ -1056,13 +1062,18 @@ class Typeson {
             }
 
             // `type` can be an array here
+            console.log('value', value);
             return [].concat(type).reduce(function reducer (val, typ) {
                 if (hasConstructorOf(val, TypesonPromise)) {
                     return val.then((v) => { // TypesonPromise here too
                         return reducer(v, typ);
                     });
                 }
-                return executeReviver(typ, val);
+                console.log('ttt', val);
+                const a = executeReviver(typ, val);
+                console.log('uuu', a);
+
+                return a;
             }, value);
         }
 

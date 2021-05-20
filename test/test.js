@@ -6,7 +6,7 @@ import Typeson from '../typeson.js';
 import * as B64 from
     '../node_modules/base64-arraybuffer-es6/dist/base64-arraybuffer-es.js';
 
-const debug = false;
+const debug = 1;
 function log (...args) {
     if (debug) {
         console.log(...args);
@@ -889,7 +889,41 @@ describe('Typeson', function () {
 
         assert(
             back.__raw_map instanceof Map,
-            'Revives `Map` on class with Symbol.toStringTag'
+            'Revives `Map` on object with Symbol.toStringTag'
+        );
+
+        // Todo: Need to implement Symbol iteration
+        // assert(
+        //     back[Symbol.toStringTag] === 'a',
+        //     'Revives `Symbol.toStringTag`'
+        // );
+    });
+
+    it.only('should allow empty string keys', () => {
+        const map = {
+            map: {
+                test (x) { return Typeson.toStringTag(x) === 'Map'; },
+                replace (mp) { return [...mp.entries()]; },
+                revive (entries) {
+                    console.log('entries', entries);
+                    return new Map(entries);
+                }
+            }
+        };
+
+        const typeson = new Typeson().register([map]);
+
+        const a = {
+            '': new Map()
+        };
+
+        const tson = typeson.stringify(a, null, 2);
+        log('tson', tson);
+        const back = typeson.parse(tson);
+
+        assert(
+            back[''] instanceof Map,
+            'Revives `Map` on object with empty string'
         );
 
         // Todo: Need to implement Symbol iteration
