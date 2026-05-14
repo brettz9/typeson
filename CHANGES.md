@@ -2,7 +2,7 @@
 
 ## 10.0.0 (unreleased)
 
-- chore: bump engines to Node 20+
+- chore: bump `engines` to Node 22+
 - chore: update devDeps.
 
 ## 9.0.4
