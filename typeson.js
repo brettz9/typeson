@@ -107,11 +107,10 @@ import {
 
 const {keys, hasOwn} = Object,
     {isArray} = Array,
-    // eslint-disable-next-line @stylistic/max-len -- Long
-    /** @type {("type"|"replaced"|"iterateIn"|"iterateUnsetNumeric"|"addLength")[]} */
-    internalStateObjPropsToIgnore = [
-        'type', 'replaced', 'iterateIn', 'iterateUnsetNumeric', 'addLength'
-    ];
+    internalStateObjPropsToIgnore = /** @type {const} */ ([
+        'type', 'replaced', 'iterateIn', 'iterateUnsetNumeric',
+        'iterateSymbols', 'addLength'
+    ]);
 
 /**
  * @param {object} obj
