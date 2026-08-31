@@ -14,6 +14,6 @@
     "target": "es6",
     "outDir": "dist"
   },
-  "include": ["typeson.js", "utils/**/*.js", "test/**/*.js", ".eslintrc.cjs", "test/index.html", "README.md", "rollup.config.js"],
-  "exclude": ["node_modules", "rollup.config.js", "test/chaiESMLoader.js"]
+  "include": ["typeson.js", "utils/**/*.js", "utils/TypesonPromise.d.ts", "test/**/*.js", ".eslintrc.cjs", "test/index.html", "README.md", "rollup.config.js"],
+  "exclude": ["node_modules", "rollup.config.js", "test/chaiESMLoader.js", "utils/TypesonPromise.js"]
 }

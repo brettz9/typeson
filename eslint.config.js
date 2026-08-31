@@ -69,7 +69,15 @@ export default [
             'node_modules',
             // TS issues
             'test/chaiESMLoader.js',
-            'rollup.config.js'
+            'rollup.config.js',
+            // `TypesonPromise.js` is deliberately frozen so its
+            //   `Function.prototype.toString` output minifies identically
+            //   across bundles (see `hasConstructorOf`). It is excluded from
+            //   `tsconfig.json` in favour of the hand-authored companion
+            //   declaration, so neither file takes part in the type-aware
+            //   lint pass.
+            'utils/TypesonPromise.js',
+            'utils/TypesonPromise.d.ts'
         ]
     },
     ...ashNazg(['sauron']),

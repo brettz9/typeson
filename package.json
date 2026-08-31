@@ -25,6 +25,7 @@
   },
   "scripts": {
     "tsc": "tsc",
+    "tsc:ts7": "npx -y -p typescript@^7 -c \"tsc\"",
     "prepublishOnly": "pnpm i && pnpm build",
     "eslint": "eslint .",
     "lint": "npm run eslint --",

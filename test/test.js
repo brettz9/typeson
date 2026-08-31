@@ -440,12 +440,14 @@ describe('Typeson', function () {
         assert(res[2] === 3, 'Third item should be 3');
     });
     it('should support intermediate types', () => {
-        /**
-         * @param {Date} date
-         * @returns {void}
-         */
-        function CustomDate (date) {
-            this._date = date;
+        class CustomDate {
+            /**
+             * @param {Date} date
+             */
+            constructor (date) {
+                /** @type {Date} */
+                this._date = date;
+            }
         }
         const typeson = new Typeson()
             .register(globalTypeson.types)
@@ -469,12 +471,14 @@ describe('Typeson', function () {
     });
 
     it('should support intermediate types (async)', async () => {
-        /**
-         * @param {Date} date
-         * @returns {void}
-         */
-        function CustomDate (date) {
-            this._date = date;
+        class CustomDate {
+            /**
+             * @param {Date} date
+             */
+            constructor (date) {
+                /** @type {Date} */
+                this._date = date;
+            }
         }
         const typeson = new Typeson()
             .register({
@@ -526,22 +530,27 @@ describe('Typeson', function () {
     });
 
     it('should run replacers recursively', () => {
-        /**
-         * @param {Date} date
-         * @param {string} name
-         * @returns {void}
-         */
-        function CustomDate (date, name) {
-            this._date = date;
-            this.name = name;
-            this.year = date.getFullYear();
+        class CustomDate {
+            /**
+             * @param {Date} date
+             * @param {string} name
+             */
+            constructor (date, name) {
+                /** @type {Date} */
+                this._date = date;
+                /** @type {string} */
+                this.name = name;
+                this.year = date.getFullYear();
+            }
+
+            getRealDate () {
+                return this._date;
+            }
+
+            getName () {
+                return this.name;
+            }
         }
-        CustomDate.prototype.getRealDate = function () {
-            return this._date;
-        };
-        CustomDate.prototype.getName = function () {
-            return this.name;
-        };
 
         const date = new Date();
 
@@ -584,8 +593,8 @@ describe('Typeson', function () {
         assert(y[0] instanceof Date, 'y[0] should be a Date');
         assert(y[0].getTime() === 3, 'Time should be 3');
 
-        function Custom () {
-            this.x = 'oops';
+        class Custom {
+            x = 'oops';
         }
 
         let TSON = new Typeson().register({
@@ -672,8 +681,10 @@ describe('Typeson', function () {
     */
 
     it('executing toJSON', () => {
-        function A () {}
-        A.prototype.toJSON = function () { return 'abcd'; };
+        class A {
+            // eslint-disable-next-line class-methods-use-this -- Testing
+            toJSON () { return 'abcd'; }
+        }
         let typeson = new Typeson();
         let a = new A(); // Encapsulated as is
         let tson = typeson.stringify(a);
@@ -2121,7 +2132,7 @@ describe('Typeson', function () {
 
             /**
              * @param {number} a
-             * @returns {new (b: number, isArr?: boolean) => B}
+             * @returns {new (b: number, isArr?: boolean) => A}
              */
             function createExtendingClass (a) {
                 class B extends A {
@@ -2193,7 +2204,7 @@ describe('Typeson', function () {
 
             /**
              * @param {number} a
-             * @returns {new (b: number, isArr?: boolean) => B}
+             * @returns {new (b: number, isArr?: boolean) => A}
              */
             function createExtendingClass (a) {
                 class B extends A {
@@ -2902,6 +2913,8 @@ describe('Typeson', function () {
             }
 
             const typeson = new Typeson().register({
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                // @ts-expect-error Intentional sync (non-promise) result for test
                 mySyncType: {
                     test (x) { return x instanceof MySync; },
                     replace (o) {
@@ -2911,7 +2924,6 @@ describe('Typeson', function () {
                         // Do something more useful in real code
                         return new MySync(data);
                     },
-                    /** @type {any} */
                     reviveAsync (data) {
                         // Do something more useful in real code
                         return new MySync(data);
@@ -2937,6 +2949,8 @@ describe('Typeson', function () {
             }
 
             const typeson = new Typeson().register({
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                // @ts-expect-error Intentional sync (non-promise) result for test
                 mySyncType: {
                     test (x) { return x instanceof MySync; },
                     replace (o) {
@@ -2946,7 +2960,6 @@ describe('Typeson', function () {
                         // Do something more useful in real code
                         return new MySync(data);
                     },
-                    /** @type {any} */
                     reviveAsync (data) {
                         // Do something more useful in real code
                         return new MySync(data);
@@ -3107,6 +3120,8 @@ describe('Typeson', function () {
             }
 
             const typeson = new Typeson().register({
+                // eslint-disable-next-line @stylistic/max-len -- Long
+                // @ts-expect-error Intentional sync (non-promise) result for test
                 mySyncType: {
                     test (x) { return x instanceof MySync; },
                     replace (o) {
@@ -3116,7 +3131,6 @@ describe('Typeson', function () {
                         // Do something more useful in real code
                         return new MySync(data);
                     },
-                    /** @type {any} */
                     reviveAsync (data) {
                         // Do something more useful in real code
                         return new MySync(data);
