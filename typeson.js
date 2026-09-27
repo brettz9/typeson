@@ -176,10 +176,7 @@ function resolveSymbolIdentity (sym, symbolsByValue) {
         return {wellKnown};
     }
     const registered = symbolsByValue.get(sym);
-    if (registered !== undefined) {
-        return {registered};
-    }
-    return null;
+    return registered !== undefined ? {registered} : null;
 }
 
 /**
@@ -246,8 +243,7 @@ function nestedPathsFirst (a, b) {
                 ? -1
                 : a.keypath > b.keypath
                     ? 1
-                    // Keypath should never be the same
-                    /* c8 ignore next 1 */
+                    /* c8 ignore next -- Keypath should never be the same */
                     : 0;
 }
 
@@ -664,7 +660,7 @@ class Typeson {
 
         // Clone the object deeply while at the same time replacing any
         //   special types or cyclic reference:
-        const cyclic = 'cyclic' in opts ? opts.cyclic : true;
+        const cyclic = !('cyclic' in opts) || opts.cyclic;
         const {encapsulateObserver, encapsulateError} = opts;
 
         /**
@@ -678,10 +674,7 @@ class Typeson {
             //  special type (or special case where object has own `$types`)
             const typeNames = Object.values(types);
             if (opts.iterateNone) {
-                if (typeNames.length) {
-                    return typeNames[0];
-                }
-                return getJSONType(_ret);
+                return typeNames.length ? typeNames[0] : getJSONType(_ret);
             }
             if (opts.returnTypeNames) {
                 return typeNames.length ? [...new Set(typeNames)] : false;
@@ -1318,8 +1311,8 @@ class Typeson {
                     //   own types to replace
                     let replaced;
                     if (sync || !replacer.replaceAsync) {
-                        // Shouldn't reach here due to above condition
-                        /* c8 ignore next 3 */
+                        // eslint-disable-next-line @stylistic/max-len -- Long
+                        /* c8 ignore next 3 -- Shouldn't reach here due to above condition */
                         if (typeof replacer.replace === 'undefined') {
                             throw new TypeError('Missing replacer');
                         }
@@ -1367,10 +1360,7 @@ class Typeson {
             return [finish(ret)];
         }
 
-        if (sync) {
-            return finish(ret);
-        }
-        return Promise.resolve(finish(ret));
+        return sync ? finish(ret) : Promise.resolve(finish(ret));
     }
 
     /**
@@ -1538,10 +1528,6 @@ class Typeson {
             // const references = [];
             // const reviveTypes = [];
 
-            /* c8 ignore next 3 */
-            if (!types) {
-                throw new Error('Found bad `types`');
-            }
             /** @type {PlainObjectType[]} */
             const plainObjectTypes = [];
 

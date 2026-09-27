@@ -11,23 +11,22 @@
         <div id="mocha"></div>
 
         <!-- Test Environment -->
-        <script src="../node_modules/mocha/mocha.js"></script>
         <script src="../node_modules/chai/chai.js"></script>
         <!-- <script src="../node_modules/sinon/pkg/sinon-no-sourcemaps.js"></script> -->
         <script type="importmap">
         {
             "imports": {
-                "mocha": "./mochaESMLoader.js",
-                "chai": "./chaiESMLoader.js",
+                "mocha": "../node_modules/mocha/mocha.mjs",
+                "chai": "../node_modules/chai/index.js",
                 "base64-arraybuffer-es6": "../node_modules/base64-arraybuffer-es6/dist/base64-arraybuffer-es.js"
             }
         }
         </script>
 
         <script type="module">
-        // eslint-disable-next-line unicorn/no-top-level-side-effects -- Safe
+        // eslint-disable-next-line no-shadow -- Ok
+        import {mocha} from 'mocha';
         mocha.setup({ui: 'bdd', timeout: 5000});
-        export {};
         </script>
         <script type="module">
         import './test.js';

@@ -1,4 +1,4 @@
-import {readFileSync} from 'fs';
+import {readFileSync} from 'node:fs';
 import {defineConfig} from 'eslint/config';
 
 import ashNazg from 'eslint-config-ash-nazg';

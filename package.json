@@ -71,26 +71,26 @@
     "node": ">=22.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^8.0.1",
-    "@babel/preset-env": "^8.0.2",
+    "@babel/core": "^8.0.6",
+    "@babel/preset-env": "^8.0.6",
     "@rollup/plugin-babel": "^7.1.0",
     "@rollup/plugin-terser": "^1.0.0",
     "@types/babel__core": "^7.20.5",
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.6.3",
     "base64-arraybuffer-es6": "^3.1.0",
     "c8": "^12.0.0",
     "chai": "^6.2.2",
-    "eslint": "^10.8.1",
-    "eslint-config-ash-nazg": "42.5.0",
+    "eslint": "^10.11.0",
+    "eslint-config-ash-nazg": "43.2.3",
     "http-server": "^14.1.1",
-    "mocha": "^11.8.0",
+    "mocha": "^12.0.2",
     "open-cli": "^9.0.0",
-    "rollup": "4.62.4",
+    "rollup": "4.63.5",
     "rollup-plugin-re": "^1.0.7",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.67.0"
+    "typescript-eslint": "^8.70.1"
   },
   "tonicExample": "var Typeson = require('typeson');\nvar TSON = new Typeson().register(require('typeson-registry/presets/builtin'));\n\nTSON.stringify({foo: new Date()}, null, 2);"
 }
